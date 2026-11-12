@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervision Solaire — ENSPD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --cream:#F5F1E8; 
+  --cream-card: rgba(251, 248, 241, 0.70); 
+  --cream-deep:#EFE9DA;
+  --yellow:#F4D03F; --yellow-deep:#E8C220; --ink:#1C1C1A; --ink-soft:#2A2A28;
+  --grey:#8A8578; --grey-light:#B8B2A4; --green:#4CAF6D; --green-bg:#E3F3E8;
+  --red:#E05B4A; --red-bg:#FBE7E3; --blue:#3B7DD8; --blue-bg:#E8F0FB;
+  --line: rgba(229, 222, 207, 0.5); --radius:16px; --radius-sm:11px;
+  --shadow:0 8px 32px 0 rgba(120, 110, 80, 0.12); --shadow-soft:0 4px 12px rgba(120,110,80,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { 
+  font-family:'Plus Jakarta Sans',sans-serif; 
+  background: linear-gradient(160deg, #F5F1E8 0%, #EFE8D4 50%, #F5EFDF 100%) fixed; 
+  color:var(--ink); 
+  min-height:100vh; 
+  -webkit-font-smoothing:antialiased; 
+  padding-bottom:90px; 
+}
+svg.icon { width:100%; height:100%; display:block; stroke-width:1.9; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 28px; max-width:1280px; margin:0 auto; }
+.brand { display:flex; align-items:center; gap:11px; font-size:1.25rem; font-weight:800; letter-spacing:-0.5px; }
+.brand-logo { width:36px; height:36px; border-radius:11px; background:var(--yellow); display:grid; place-items:center; box-shadow:0 3px 8px rgba(232,194,32,0.4); }
+.brand-logo svg { width:21px; height:21px; stroke:var(--ink); }
+
+.nav-pc { 
+  display:flex; 
+  gap:4px; 
+  background: rgba(251, 248, 241, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 5px; 
+  border-radius:30px; 
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:var(--shadow-soft); 
+}
+.nav-pc button { border:none; background:transparent; padding:9px 22px; border-radius:22px; font-size:0.9rem; font-weight:600; color:var(--grey); cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.nav-pc button.active { background:var(--ink); color:white; box-shadow:0 3px 10px rgba(28,28,26,0.25); }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+
+.status-pill { 
+  display:flex; 
+  align-items:center; 
+  gap:8px; 
+  background: var(--cream-card); 
+  backdrop-filter: blur(8px);
+  padding:8px 16px; 
+  border-radius:22px; 
+  font-size:0.8rem; 
+  font-weight:600; 
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:var(--shadow-soft); 
+}
+.dot { width:9px; height:9px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px var(--green-bg); animation:pulse 2s infinite; }
+.dot.off { background:var(--red); box-shadow:0 0 0 3px var(--red-bg); }
+@keyframes pulse { 50% { opacity:0.5; } }
+
+.container { max-width:1280px; margin:0 auto; padding:8px 24px 40px; }
+.page-title { font-size:2rem; font-weight:800; letter-spacing:-1px; margin:14px 0 4px; }
+.page-sub { color:var(--grey); font-size:0.9rem; margin-bottom:24px; font-weight:500; }
+.tab-content { display:none; animation:fade 0.35s ease; }
+.tab-content.active { display:block; }
+@keyframes fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+.grid { display:grid; gap:18px; }
+.grid-dash { grid-template-columns:1.1fr 1fr 1fr; grid-template-areas:"soc stats stats" "soc relays relays"; }
+
+.card { 
+  background: var(--cream-card); 
+  border-radius:var(--radius); 
+  padding:22px; 
+  box-shadow: var(--shadow); 
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+}
+.card-dark { 
+  background: rgba(28, 28, 26, 0.85); 
+  color:var(--cream); 
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-head h3 { font-size:1rem; font-weight:700; margin:0; }
+.card-head .ico { width:32px; height:32px; border-radius:9px; background:rgba(28, 28, 26, 0.05); display:grid; place-items:center; }
+.card-head .ico svg { width:17px; height:17px; stroke:var(--ink); }
+.card-dark .card-head .ico { background:rgba(255,255,255,0.1); }
+.card-dark .card-head .ico svg { stroke:var(--cream); }
+
+.soc-card { grid-area:soc; display:flex; flex-direction:column; }
+.ring-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:10px 0; }
+.ring { position:relative; width:230px; height:230px; }
+.ring svg.gauge { transform:rotate(-90deg); width:100%; height:100%; }
+.ring-bg { fill:none; stroke:rgba(28, 28, 26, 0.05); stroke-width:18; }
+.ring-fill { fill:none; stroke:var(--yellow); stroke-width:18; stroke-linecap:round; transition:stroke-dashoffset 1s ease, stroke 0.5s; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.06)); }
+.ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ring-val { font-size:3.4rem; font-weight:800; letter-spacing:-2px; line-height:1; }
+.ring-label { font-size:0.78rem; color:var(--grey); font-weight:600; margin-top:4px; letter-spacing:1px; }
+.ring-sub { margin-top:8px; padding:5px 14px; background:var(--green-bg); color:var(--green); border-radius:16px; font-size:0.78rem; font-weight:700; }
+.ring-sub.warn { background:#FDF3DD; color:var(--yellow-deep); }
+.ring-sub.crit { background:var(--red-bg); color:var(--red); }
+
+.autonomy { display:flex; justify-content:space-around; border-top:1px solid var(--line); padding-top:16px; margin-top:6px; }
+.autonomy div { text-align:center; }
+.autonomy .big { font-size:1.3rem; font-weight:800; }
+.autonomy .lbl { font-size:0.72rem; color:var(--grey); font-weight:500; }
+
+.stats-card { grid-area:stats; }
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.stat { background: rgba(28, 28, 26, 0.03); border-radius:var(--radius-sm); border: 1px solid rgba(255,255,255,0.4); padding:18px 16px; text-align:center; }
+.stat .num { font-size:2rem; font-weight:800; letter-spacing:-1px; }
+.stat .unit { font-size:0.95rem; color:var(--grey); font-weight:600; }
+.stat .lbl { font-size:0.72rem; color:var(--grey); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
+.stat .ico-top { width:26px; height:26px; margin:0 auto 8px; }
+.stat .ico-top svg { stroke:var(--yellow-deep); }
+
+.relays-card { grid-area:relays; }
+.relay { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+.relay:last-child { border-bottom:none; }
+.relay-ico { width:44px; height:44px; border-radius:12px; background:rgba(28, 28, 26, 0.03); display:grid; place-items:center; flex-shrink:0; }
+.relay-ico svg { width:21px; height:21px; stroke:var(--ink); }
+.relay-info { flex:1; }
+.relay-name { font-weight:700; font-size:0.95rem; }
+.relay-state { font-size:0.78rem; color:var(--grey); margin-top:2px; font-weight:500; }
+.relay-mode { font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:10px; background:var(--cream-deep); color:var(--grey); cursor:pointer; user-select:none; letter-spacing:0.3px; transition: all 0.2s; }
+.relay-mode.auto { background:var(--blue-bg); color:var(--blue); }
+
+.switch { position:relative; width:52px; height:30px; flex-shrink:0; cursor:pointer; transition: opacity 0.3s ease; }
+.switch input { opacity:0; width:0; height:0; }
+.slider { position:absolute; inset:0; border-radius:30px; background:var(--grey-light); transition:0.3s; }
+.slider:before { content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; background:white; border-radius:50%; transition:0.3s; box-shadow:0 2px 5px rgba(0,0,0,0.15); }
+.switch input:checked + .slider { background:var(--green); }
+.switch input:checked + .slider:before { transform:translateX(22px); }
+.switch input:disabled + .slider { background: #D5D0C5; cursor: not-allowed; opacity: 0.5; }
+.switch input:disabled { cursor: not-allowed; }
+.switch.danger input:checked + .slider { background:var(--red); }
+
+.grid-analyse { grid-template-columns:1fr 1fr; grid-template-areas:"chart1 chart1" "chart2 kwh"; }
+.chart-soc { grid-area:chart1; }
+.chart-pow { grid-area:chart2; }
+.kwh-card { grid-area:kwh; display:flex; flex-direction:column; justify-content:center; }
+.kwh-big { font-size:3rem; font-weight:800; letter-spacing:-2px; }
+.kwh-unit { font-size:1.1rem; color:var(--grey-light); }
+.chart-box { position:relative; height:260px; }
+.chart-box-sm { position:relative; height:200px; }
+
+.grid-journal { grid-template-columns:1fr 1fr; grid-template-areas:"logs logs" "downtime maint"; }
+.logs-card { grid-area:logs; }
+.downtime-card { grid-area:downtime; }
+.maint-card { grid-area:maint; }
+.log-table { width:100%; border-collapse:collapse; }
+.log-scroll { max-height:320px; overflow-y:auto; }
+.log-table th { text-align:left; font-size:0.72rem; color:var(--grey); text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; position:sticky; top:0; background: #F9F6F0; font-weight:600; border-bottom: 1px solid var(--line); }
+.log-table td { padding:11px 10px; font-size:0.85rem; border-top:1px solid var(--line); font-weight:500; }
+.log-time { color:var(--grey); font-size:0.78rem; white-space:nowrap; }
+.log-badge { font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:10px; }
+.b-info { background:var(--blue-bg); color:var(--blue); }
+.b-warn { background:#FDF3DD; color:var(--yellow-deep); }
+.b-crit { background:var(--red-bg); color:var(--red); }
+.b-ok { background:var(--green-bg); color:var(--green); }
+.downtime-big { font-size:2.6rem; font-weight:800; letter-spacing:-1.5px; }
+
+.btn { border:none; padding:11px 18px; border-radius:12px; font-weight:700; font-size:0.82rem; cursor:pointer; font-family:inherit; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; }
+.btn svg { width:15px; height:15px; }
+.btn-light { background:var(--cream-deep); color:var(--ink); border: 1px solid rgba(0,0,0,0.05); }
+.btn-light svg { stroke:var(--ink); }
+.maint-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-top:1px solid var(--line); margin-top:14px; }
+
+.nav-mobile { 
+  display:none; 
+  position:fixed; 
+  bottom:0; left:0; right:0; 
+  background: rgba(251, 248, 241, 0.75); 
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top:1px solid var(--line); 
+  padding:10px 8px calc(10px + env(safe-area-inset-bottom)); 
+  justify-content:space-around; 
+  box-shadow:0 -4px 20px rgba(0,0,0,0.03); 
+  z-index:100; 
+}
+.nav-mobile button { border:none; background:transparent; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:0.68rem; font-weight:600; color:var(--grey); font-family:inherit; padding:5px 18px; border-radius:12px; transition:all 0.2s; }
+.nav-mobile button .nav-ico { width:22px; height:22px; }
+.nav-mobile button .nav-ico svg { stroke:var(--grey); }
+.nav-mobile button.active { color:var(--ink); background:rgba(28,28,26,0.05); }
+.nav-mobile button.active .nav-ico svg { stroke:var(--ink); }
+
+.synoptic { display:flex; justify-content:space-between; align-items:center; padding:18px; background:rgba(28, 28, 26, 0.02); border-radius:12px; margin-bottom:18px; font-weight:700; font-size:0.9rem; border: 1px solid rgba(255,255,255,0.4); flex-wrap:wrap; gap:10px; }
+.flow-line { height:4px; flex:1; min-width:40px; background:var(--line); border-radius:2px; position:relative; overflow:hidden; transition: background 0.3s ease; }
+.flow-line::after { content:''; position:absolute; top:0; left:-100%; width:50%; height:100%; background:var(--green); animation:flowAnim 1.5s infinite linear; opacity:0.8; }
+.flow-line.blue::after { background:var(--blue); }
+.flow-line.error { background:var(--red-bg); } /* New: Visual for error state */
+.flow-line.stopped { background: rgba(138, 133, 120, 0.2); }
+.flow-line.stopped::after { display: none; }
+@keyframes flowAnim { 100% { left:100%; } }
+
+.btn-export { background:var(--ink); color:#fff; padding:8px 16px; border-radius:10px; cursor:pointer; font-weight:700; border:none; font-size:0.8rem; font-family:inherit; transition:opacity 0.2s; display:inline-flex; align-items:center; gap:6px; }
+.btn-export:hover { opacity:0.8; }
+.btn-export svg { width:16px; height:16px; stroke:white; }
+
+.pr-wrap { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+.pr-bar-bg { width:100%; height:8px; background:rgba(28, 28, 26, 0.05); border-radius:4px; margin-top:8px; overflow:hidden; position:relative; }
+.pr-bar-fill { height:100%; background:var(--blue); border-radius:4px; width:0%; transition:width 1s ease; }
+
+@media (max-width:880px) {
+  .nav-pc { display:none; }
+  .nav-mobile { display:flex; }
+  .topbar { padding:16px 20px; }
+  .container { padding:4px 16px 30px; }
+  .page-title { font-size:1.5rem; }
+  .grid-dash,.grid-analyse,.grid-journal { grid-template-columns:1fr; grid-template-areas:none; }
+  .grid-dash>*,.grid-analyse>*,.grid-journal>* { grid-area:auto !important; }
+  .ring { width:200px; height:200px; } 
+  .ring-val { font-size:2.8rem; }
+  .stats-row { grid-template-columns:1fr; }
+  .stat { display:flex; align-items:center; gap:14px; text-align:left; }
+  .stat .ico-top { margin:0; }
+  .stat-body { flex:1; }
+  .synoptic { font-size: 0.8rem; justify-content:center; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg></div>
+    <span>SolarSup</span>
+  </div>
+  <nav class="nav-pc">
+    <button class="active" data-tab="dash">Dashboard</button>
+    <button data-tab="analyse">Analyse</button>
+    <button data-tab="journal">Journal</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="status-pill"><span class="dot" id="conn-dot"></span><span id="conn-text">En ligne</span></div>
+  </div>
+</div>
+<div class="container">
+  <h1 class="page-title">Supervision Solaire</h1>
+  <p class="page-sub">Installation PV Bloc administratif ENSPD</p>
+  
+  <div class="tab-content active" id="dash">
+    <div class="card" style="margin-bottom: 18px; padding: 18px 22px;">
+      <div class="card-head"><h3 style="margin:0;">Schéma Synoptique du Flux d'Énergie</h3></div>
+      <div class="synoptic">
+        <span>☀️ PV</span>
+        <div class="flow-line" id="flow-pv"></div>
+        <span>🔋 Batterie</span>
+        <div class="flow-line" id="flow-bat"></div>
+        <span>⚡ Onduleur</span>
+        <div class="flow-line blue" id="flow-load"></div>
+        <span>🔌 Charges</span>
+      </div>
+    </div>
+
+    <div class="grid grid-dash">
+      <div class="card soc-card">
+        <div class="card-head"><h3>État de charge</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><path d="M6 11v2"/></svg></div></div>
+        <div class="ring-wrap"><div class="ring">
+          <svg class="gauge" viewBox="0 0 230 230"><circle class="ring-bg" cx="115" cy="115" r="100"></circle><circle class="ring-fill" id="soc-ring" cx="115" cy="115" r="100" stroke-dasharray="628" stroke-dashoffset="628"></circle></svg>
+          <div class="ring-center"><div class="ring-val" id="soc-val">--</div><div class="ring-label">BATTERIE</div><div class="ring-sub" id="soc-state">En attente</div></div>
+        </div></div>
+        
+        <div style="text-align:center; font-size:0.85rem; font-weight:700; color:var(--grey); margin-bottom:10px; transition: all 0.3s;">
+          Santé de la Batterie (SOH) : <span id="soh-val" style="color:var(--green);">98%</span>
+        </div>
+
+        <div class="autonomy"><div><div class="big" id="autonomy">--</div><div class="lbl">Autonomie estimée</div></div><div><div class="big" id="vbat-mini">-- V</div><div class="lbl">Tension batterie</div></div></div>
+      </div>
+      <div class="card stats-card">
+        <div class="card-head"><h3>Mesures temps réel</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div></div>
+        <div class="stats-row">
+          <div class="stat"><div class="ico-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v6a5 5 0 0 1-10 0z"/><path d="M9 3v4M15 3v4M12 18v3"/></svg></div><div class="stat-body"><span class="num" id="stat-v">--</span><span class="unit"> V</span><div class="lbl">Tension</div></div></div>
+          <div class="stat"><div class="ico-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 4-5"/></svg></div><div class="stat-body"><span class="num" id="stat-a">--</span><span class="unit"> A</span><div class="lbl">Courant</div></div></div>
+          <div class="stat"><div class="ico-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></div><div class="stat-body"><span class="num" id="stat-w">--</span><span class="unit"> W</span><div class="lbl">Puissance</div></div></div>
+        </div>
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+          <div><div style="font-size:0.72rem; color:var(--grey); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Tension onduleur (AC)</div><div style="font-size:1.6rem; font-weight:800; margin-top:2px;"><span id="stat-vac">--</span> V</div></div>
+          <div style="font-size:0.76rem; color:var(--grey); text-align:right; font-weight:500;">Sortie 220V<br>onduleur</div>
+        </div>
+
+        <div class="pr-wrap">
+          <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;">
+            <span style="color:var(--grey);">Ratio de Performance (PR)</span>
+            <span id="pr-val" style="color:var(--blue);">--%</span>
+          </div>
+          <div class="pr-bar-bg"><div class="pr-bar-fill" id="pr-bar"></div></div>
+          <div style="font-size:0.7rem; color:var(--grey-light); margin-top:6px; font-weight:500;">Comparaison énergie réelle vs théorique (pertes incluses)</div>
+        </div>
+
+      </div>
+      <div class="card relays-card">
+        <div class="card-head"><h3>Contrôle des circuits</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div></div>
+        <div class="relay"><div class="relay-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></div><div class="relay-info"><div class="relay-name">Éclairage</div><div class="relay-state" id="r1-state">—</div></div><span class="relay-mode auto" id="r1-mode" onclick="toggleMode('r1')">AUTO</span><label class="switch"><input type="checkbox" id="r1-sw" onchange="cmdRelay('R1', this.checked)"><span class="slider"></span></label></div>
+        <div class="relay"><div class="relay-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9v2M15 9v2M9 15h6"/></svg></div><div class="relay-info"><div class="relay-name">Prises / PC</div><div class="relay-state" id="r2-state">—</div></div><span class="relay-mode auto" id="r2-mode" onclick="toggleMode('r2')">AUTO</span><label class="switch"><input type="checkbox" id="r2-sw" onchange="cmdRelay('R2', this.checked)"><span class="slider"></span></label></div>
+        <div class="relay"><div class="relay-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></div><div class="relay-info"><div class="relay-name">Climatisation</div><div class="relay-state" id="r3-state">—</div></div><span class="relay-mode auto" id="r3-mode" onclick="toggleMode('r3')">AUTO</span><label class="switch"><input type="checkbox" id="r3-sw" onchange="cmdRelay('R3', this.checked)"><span class="slider"></span></label></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="analyse">
+    <div class="grid grid-analyse">
+      <div class="card chart-soc">
+        <div class="card-head">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+            <h3 style="margin:0;">Historique état de charge 24h</h3>
+          </div>
+          <button class="btn-export" onclick="exportCSV()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exporter Données
+          </button>
+        </div>
+        <div class="chart-box"><canvas id="chartSOC"></canvas></div>
+      </div>
+      <div class="card chart-pow"><div class="card-head"><h3>Puissance consommée 24h</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div></div><div class="chart-box-sm"><canvas id="chartPow"></canvas></div></div>
+      <div class="card card-dark kwh-card"><div class="card-head"><h3 style="color:var(--cream)">Consommation du jour</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg></div></div><div><span class="kwh-big" id="kwh-val">--</span><span class="kwh-unit"> kWh</span></div><p style="color:var(--grey-light); font-size:0.82rem; margin-top:8px; font-weight:500;">Énergie totale consommée depuis minuit</p></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="journal">
+    <div class="grid grid-journal">
+      <div class="card logs-card">
+        <div class="card-head">
+          <h3>Journal des événements</h3>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-light" onclick="exportJournal()">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporter Journal
+            </button>
+            <button class="btn btn-light" onclick="resetLogs()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Effacer</button>
+          </div>
+        </div>
+        <div class="log-scroll"><table class="log-table"><thead><tr><th>Horodatage</th><th>Type</th><th>Événement</th></tr></thead><tbody id="log-body"></tbody></table></div>
+      </div>
+      <div class="card downtime-card"><div class="card-head"><h3>Indisponibilité</h3><div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div></div><div class="downtime-big" id="downtime-val">--</div><p style="color:var(--grey); font-size:0.82rem; margin-top:6px; font-weight:500;">Temps total où une charge a été coupée</p></div>
+      
+      <div class="card maint-card">
+        <div class="card-head">
+          <h3>Maintenance & Simulations</h3>
+          <div class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2z"/></svg></div>
+        </div>
+        <p style="color:var(--grey); font-size:0.85rem; font-weight:500; margin-bottom:12px;">Outils de diagnostic interactifs (Pour soutenance de projet).</p>
+        
+        <div class="maint-toggle" style="padding-top:10px;">
+          <span style="font-weight:700; font-size:0.9rem;">Mode maintenance</span>
+          <label class="switch"><input type="checkbox" id="maint-sw" onchange="toggleMaintenance(this.checked)"><span class="slider"></span></label>
+        </div>
+        
+        <div class="maint-toggle" style="border-top:none; margin-top:0; padding-top:6px;">
+          <span style="font-weight:700; font-size:0.9rem; color:var(--red);">Simuler Panne PV (PR)</span>
+          <label class="switch danger"><input type="checkbox" id="panne4-sw" onchange="togglePanne4(this.checked)"><span class="slider"></span></label>
+        </div>
+
+        <div class="maint-toggle" style="border-top:none; margin-top:0; padding-top:6px;">
+          <span style="font-weight:700; font-size:0.9rem; color:var(--red);">Simuler Panne Batterie (SOH)</span>
+          <label class="switch danger"><input type="checkbox" id="panne8-sw" onchange="togglePanne8(this.checked)"><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav-mobile">
+  <button class="active" data-tab="dash"><span class="nav-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>Dashboard</button>
+  <button data-tab="analyse"><span class="nav-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>Analyse</button>
+  <button data-tab="journal"><span class="nav-ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>Journal</button>
+</nav>
+
+<script>
+// Constants
+const BATTERY_CAPACITY_WH = 20000; // Wh
+const MIN_SOC_ABSOLUTE = 10; // %
+const RELAY_R1_POWER_W = 1000; // Éclairage
+const RELAY_R2_POWER_W = 2700; // Prises / PC
+const RELAY_R3_POWER_W = 1200; // Climatisation
+const RELAY_R1_SOC_THRESHOLD = 10; // %
+const RELAY_R2_SOC_THRESHOLD = 40; // %
+const RELAY_R3_SOC_THRESHOLD = 70; // %
+const SIMULATION_INTERVAL_MS = 1000; // ms (1 second real time)
+const SIMULATION_STEP_MINUTES = 5; // minutes simulated per step
+const LOG_RETENTION_DAYS = 7; // days
+const SOC_CRIT_THRESHOLD = 15; // %
+const SOC_WARN_THRESHOLD = 35; // %
+const PR_GOOD_THRESHOLD = 80; // %
+const PR_OK_THRESHOLD = 65; // %
+const RING_GAUGE_CIRCUMFERENCE = 628.318; // 2 * Math.PI * 100 (for r=100)
+function downloadFile(content, filename) {
+  const blob = new Blob(["\uFEFF" + content], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV() {
+  let csv = "Horodatage;SOC (%);Puissance (W)\n";
+  const socData = chartSOC.data.datasets[0].data;
+  const powData = chartPow.data.datasets[0].data;
+  
+  for(let i=0; i<24; i++) {
+    const s = socData[i] !== undefined ? socData[i] : 0;
+    const p = powData[i] !== undefined ? powData[i] : 0;
+    csv += `${i}h;${s};${p}\n`;
+  }
+  downloadFile(csv, "Analyse_Solaire.csv");
+}
+
+function exportJournal() {
+  let csv = "Horodatage;Type;Evenement\n";
+  savedLogs.forEach(log => {
+    csv += `${log.time};${log.type.toUpperCase()};"${log.msg}"\n`;
+  });
+  downloadFile(csv, "Journal_Evenements.csv");
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+}
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+
+const relayModes={r1:'auto',r2:'auto',r3:'auto'};
+
+function toggleMode(r){
+  relayModes[r]=relayModes[r]==='auto'?'manuel':'auto';
+  const el=document.getElementById(r+'-mode');
+  const sw=document.getElementById(r+'-sw');
+  
+  if(relayModes[r]==='auto'){
+    el.textContent='AUTO';
+    el.classList.add('auto');
+    sw.disabled = true;
+  }else{
+    el.textContent='MANUEL';
+    el.classList.remove('auto');
+    sw.disabled = false;
+  }
+}
+
+function cmdRelay(relay,state){fetch(`/CMD?${relay}=${state?1:0}`).catch(()=>console.log(`${relay}=${state?1:0}`));}
+function toggleMaintenance(on){fetch(`/MAINT?on=${on?1:0}`).catch(()=>console.log('Maintenance '+(on?'ON':'OFF')));}
+
+let isPanne4Active = false;
+let isPanne8Active = false;
+
+function togglePanne4(on) {
+  isPanne4Active = on;
+  if(on) {
+    addDynamicLog('crit', 'DÉFAUT PV : Baisse de rendement anormale (PR < 40%) - Vérification câblage requise.');
+  } else {
+    addDynamicLog('ok', 'RÉSOLUTION : Production PV revenue à la normale. Ratio de performance stabilisé.');
+  }
+}
+
+function togglePanne8(on) {
+  isPanne8Active = on;
+  if(on) {
+    currentSOC -= 25; 
+    if(currentSOC < 10) currentSOC = 10;
+    addDynamicLog('crit', 'ALERTE CRITIQUE : Déséquilibre batterie (Chute SOH). Perte brutale de capacité détectée.');
+    document.getElementById('soh-val').textContent = '42% (DÉFAILLANT)';
+    document.getElementById('soh-val').style.color = 'var(--red)';
+  } else {
+    addDynamicLog('ok', 'RÉSOLUTION : Batterie stabilisée. Remplacement/Intervention terminée.');
+    document.getElementById('soh-val').textContent = '98%';
+    document.getElementById('soh-val').style.color = 'var(--green)';
+  }
+}
+
+let savedLogs = JSON.parse(localStorage.getItem('solarsup_logs')) || [];
+let currentBatteryState = null; 
+let lastRelayStates = { r1: null, r2: null, r3: null };
+const relayNames = { r1: 'Éclairage', r2: 'Prises / PC', r3: 'Climatisation' };
+
+function initSystemLogs() {
+  if(savedLogs.length === 0) {
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    savedLogs.push({
+      time: timeStr,
+      type: 'info',
+      msg: 'Démarrage du système de supervision et initialisation des bus de données',
+      timestamp: now.getTime()
+    });
+    localStorage.setItem('solarsup_logs', JSON.stringify(savedLogs));
+  }
+  renderLogs(savedLogs);
+}
+
+function addDynamicLog(type, msg) {
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  
+  if(savedLogs.length > 0 && savedLogs[0].msg === msg) return;
+  
+  savedLogs.unshift({ time: timeStr, type: type, msg: msg, timestamp: now.getTime() });
+  const limitTime = now.getTime() - (7 * 24 * 60 * 60 * 1000);
+  savedLogs = savedLogs.filter(item => !item.timestamp || item.timestamp > limitTime);
+  localStorage.setItem('solarsup_logs', JSON.stringify(savedLogs));
+  renderLogs(savedLogs);
+}
+
+function resetLogs(){
+  if(confirm('Effacer tout le journal des événements ?')){
+    localStorage.removeItem('solarsup_logs');
+    savedLogs = [];
+    document.getElementById('log-body').innerHTML='';
+  }
+}
+
+function renderLogs(logs){
+  const body=document.getElementById('log-body');
+  body.innerHTML='';
+  const bc={info:'b-info', warn:'b-warn', crit:'b-crit', ok:'b-ok'};
+  const bt={info:'INFO', warn:'ALERTE', crit:'CRITIQUE', ok:'OK'};
+  logs.forEach(l=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="log-time">${l.time}</td><td><span class="log-badge ${bc[l.type]||'b-info'}">${bt[l.type]||'INFO'}</span></td><td>${l.msg}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+const labels24h=Array.from({length:24},(_,i)=>`${i}h`);
+
+const chartOptionsBase = {
+  responsive:true,
+  maintainAspectRatio:false,
+  animation: { duration: 400 },
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
+  plugins:{
+    legend:{display:false},
+    tooltip: {
+      enabled: true,
+      backgroundColor: 'rgba(28, 28, 26, 0.9)',
+      titleColor: '#FBF8F1',
+      bodyColor: '#FBF8F1',
+      padding: 12,
+      boxPadding: 6,
+      borderRadius: 10,
+      borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 1,
+      titleFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
+      bodyFont: { family: 'Plus Jakarta Sans' },
+      callbacks: {
+        label: function(context) {
+          let label = context.dataset.label || '';
+          if (label) label += ' : ';
+          if (context.parsed.y !== null) {
+            label += context.parsed.y + (context.dataset.label === 'SOC' ? ' %' : ' W');
+          }
+          return label;
+        }
+      }
+    }
+  },
+  scales:{
+    y:{
+      grid:{color:'rgba(28, 28, 26, 0.05)'},
+      ticks:{color:'#8A8578', font:{family:'Plus Jakarta Sans'}}
+    },
+    x:{
+      grid:{display:false},
+      ticks:{color:'#8A8578', maxTicksLimit:12, font:{family:'Plus Jakarta Sans'}}
+    }
+  }
+};
+
+const chartSOC=new Chart(document.getElementById('chartSOC').getContext('2d'),{
+  type:'line',
+  data:{
+    labels:labels24h,
+    datasets:[{label:'SOC',data:[],borderColor:'#E8C220',backgroundColor:'rgba(244,208,63,0.06)',fill:true,tension:0.38,borderWidth:3,pointRadius:0,pointHoverRadius:6,pointHoverBackgroundColor:'#E8C220'}]
+  },
+  options: {
+    ...chartOptionsBase,
+    scales: {
+      ...chartOptionsBase.scales,
+      y: { ...chartOptionsBase.scales.y, min:0, max:100 }
+    }
+  }
+});
+
+const chartPow=new Chart(document.getElementById('chartPow').getContext('2d'),{
+  type:'line',
+  data:{
+    labels:labels24h,
+    datasets:[{label:'Puissance',data:[],borderColor:'#1C1C1A',backgroundColor:'rgba(28,28,26,0.04)',fill:true,tension:0.38,borderWidth:2.5,pointRadius:0,pointHoverRadius:6,pointHoverBackgroundColor:'#1C1C1A'}]
+  },
+  options: chartOptionsBase
+});
+
+function updateDashboard(data){
+  if(data.soc!==undefined){
+    document.getElementById('soc-val').textContent=data.soc+'%';
+    const ring=document.getElementById('soc-ring');
+    const circ=628;
+    ring.style.strokeDashoffset=circ-(circ*data.soc/100);
+    const st=document.getElementById('soc-state');
+    
+    let newState = 'normal';
+    if(data.soc<=15) newState = 'crit';
+    else if(data.soc<=35) newState = 'warn';
+    if(data.soc <= SOC_CRIT_THRESHOLD) newState = 'crit';
+    else if(data.soc <= SOC_WARN_THRESHOLD) newState = 'warn';
+
+    if(newState === 'crit'){
+    if(newState === 'crit') {
+      ring.style.stroke='#E05B4A';st.textContent='Critique';st.className='ring-sub crit';
+    }else if(newState === 'warn'){
+      ring.style.stroke='#F4D03F';st.textContent='Faible';st.className='ring-sub warn';
+    }else{
+      ring.style.stroke='#4CAF6D';st.textContent='Normal';st.className='ring-sub';
+    }
+
+    if (currentBatteryState !== null && newState !== currentBatteryState) {
+      if (newState === 'crit') {
+        addDynamicLog('crit', `Passage en état CRITIQUE (SOC: ${data.soc}%) — Risque de décharge profonde.`);
+      } else if (newState === 'warn' && currentBatteryState === 'normal') {
+        addDynamicLog('warn', `Alerte : Batterie faible (SOC: ${data.soc}%) — Préparation au délestage.`);
+      } else if (newState === 'normal' && currentBatteryState !== 'normal') {
+        addDynamicLog('ok', `Retour à la normale (SOC: ${data.soc}%) — Capacité batterie stabilisée.`);
+      }
+    }
+    currentBatteryState = newState;
+  }
+
+  if(data.voltage!==undefined){document.getElementById('stat-v').textContent=data.voltage;document.getElementById('vbat-mini').textContent=data.voltage+' V';}
+  if(data.current!==undefined)document.getElementById('stat-a').textContent=data.current;
+  if(data.power!==undefined)document.getElementById('stat-w').textContent=data.power;
+  if(data.vac!==undefined)document.getElementById('stat-vac').textContent=data.vac;
+  if(data.autonomy!==undefined)document.getElementById('autonomy').textContent=data.autonomy;
+  
+  if(data.pr!==undefined){
+    document.getElementById('pr-val').textContent = data.pr + '%';
+    document.getElementById('pr-bar').style.width = data.pr + '%';
+    if(data.pr > 80) document.getElementById('pr-bar').style.background = 'var(--green)';
+    else if(data.pr > 65) document.getElementById('pr-bar').style.background = 'var(--blue)';
+    else document.getElementById('pr-bar').style.background = 'var(--red)';
+    if(data.pr > PR_GOOD_THRESHOLD) document.getElementById('pr-bar').style.background = 'var(--green)';
+    else if(data.pr > PR_OK_THRESHOLD) document.getElementById('pr-bar').style.background = 'var(--blue)';
+    else document.getElementById('pr-bar').style.background = 'var(--red)'; // Red for low PR
+  }
+
+  if(data.relays_status){
+    ['r1', 'r2', 'r3'].forEach(id => {
+      const isNowOn = data.relays_status[id];
+      if (lastRelayStates[id] !== null && lastRelayStates[id] !== isNowOn) {
+        if (!isNowOn) addDynamicLog('warn', `Délestage Sécurité : Circuit "${relayNames[id]}" coupé automatiquement.`);
+        else addDynamicLog('ok', `Rétablissement : Circuit "${relayNames[id]}" réalimenté.`);
+      }
+      lastRelayStates[id] = isNowOn;
+      updateRelay(id, isNowOn);
+    });
+  }
+
+  if(data.flows !== undefined) {
+    document.getElementById('flow-pv').classList.toggle('stopped', !data.flows.pv);
+    document.getElementById('flow-bat').classList.toggle('stopped', !data.flows.bat);
+    document.getElementById('flow-pv').classList.toggle('error', isPanne4Active && !data.flows.pv); // New: Add error class for PV fault
+    document.getElementById('flow-load').classList.toggle('stopped', !data.flows.load);
+  }
+
+  if(data.daily_kwh!==undefined)document.getElementById('kwh-val').textContent=data.daily_kwh;
+  if(data.history_soc){chartSOC.data.datasets[0].data=data.history_soc;chartSOC.update();}
+  if(data.history_pow){chartPow.data.datasets[0].data=data.history_pow;chartPow.update();}
+  if(data.downtime!==undefined)document.getElementById('downtime-val').textContent=data.downtime;
+}
+
+function updateRelay(id,on){
+  const sw = document.getElementById(id+'-sw');
+  sw.checked=on;
+  document.getElementById(id+'-state').textContent=on?'Alimenté':'Coupé';
+  sw.disabled = (relayModes[id] === 'auto'); 
+}
+
+// -------------------------------------------------------------
+// MOTEUR DE SIMULATION EXACTE (Synchronisation Parfaite)
+// -------------------------------------------------------------
+let simHour = 8; 
+let currentSOC = 100;
+let currentSOC = 100; // Initial SOC
+let dailyKwh = 0;
+
+function demoData() {
+  simHour += (5 / 60); 
+  simHour += (SIMULATION_STEP_MINUTES / 60); 
+  
+  if (simHour >= 20) {
+      simHour = 8; 
+      currentSOC = 100; 
+      dailyKwh = 0;
+  }
+  
+  let coeff = 0.05; 
+  if (simHour >= 8 && simHour < 12) coeff = 1.0;        
+  else if (simHour >= 12 && simHour < 13) coeff = 0.7;  
+  else if (simHour >= 13 && simHour < 14) coeff = 0.35; 
+  else if (simHour >= 14 && simHour < 15) coeff = 0.85; 
+  else if (simHour >= 15 && simHour < 16) coeff = 0.9;  
+  else if (simHour >= 16 && simHour < 17) coeff = 0.75; 
+  else if (simHour >= 17 && simHour < 18) coeff = 0.55; 
+  else if (simHour >= 18 && simHour < 19) coeff = 0.3;  
+
+  let noise = 1 + (Math.random() * 0.04 - 0.02); 
+
+  let p_eclairage = 1000 * coeff;
+  let p_prises = 2700 * coeff;
+  let p_clim = 1200 * coeff;
+  let p_prises = RELAY_R2_POWER_W * coeff;
+  let p_clim = RELAY_R3_POWER_W * coeff;
+
+  let intSOC = Math.floor(currentSOC);
+  let isWorkingHour = simHour >= 8 && simHour < 19;
+  
+  let r1_on = isWorkingHour && (intSOC > 10);
+  let r2_on = isWorkingHour && (intSOC > 40);
+  let r3_on = isWorkingHour && (intSOC > 70);
+  let r1_on = isWorkingHour && (intSOC > RELAY_R1_SOC_THRESHOLD);
+  let r2_on = isWorkingHour && (intSOC > RELAY_R2_SOC_THRESHOLD);
+  let r3_on = isWorkingHour && (intSOC > RELAY_R3_SOC_THRESHOLD);
+
+  let p_total = 0;
+  if (r1_on) p_total += p_eclairage;
+  if (r2_on) p_total += p_prises;
+  if (r3_on) p_total += p_clim;
+  if (r1_on) p_total += RELAY_R1_POWER_W * coeff;
+  if (r2_on) p_total += RELAY_R2_POWER_W * coeff;
+  if (r3_on) p_total += RELAY_R3_POWER_W * coeff;
+  
+  p_total = p_total * noise;
+  if(p_total < 50) p_total = 50 + (Math.random() * 10); 
+
+  let drainMultiplier = 1.0;
+  if (isPanne4Active) drainMultiplier = 3.0; 
+  if (isPanne8Active) drainMultiplier = 6.0; 
+
+  let stepEnergyWh = (p_total * (5 / 60)) * drainMultiplier;
+  let stepEnergyWh = (p_total * (SIMULATION_STEP_MINUTES / 60)) * drainMultiplier;
+  dailyKwh += (stepEnergyWh / 1000);
+  currentSOC -= (stepEnergyWh / 20000) * 100; 
+  currentSOC -= (stepEnergyWh / BATTERY_CAPACITY_WH) * 100; 
+  
+  if (currentSOC <= 10) currentSOC = 10; 
+  if (currentSOC <= MIN_SOC_ABSOLUTE) currentSOC = MIN_SOC_ABSOLUTE; 
+  intSOC = Math.floor(currentSOC);
+
+  let autonomyStr = "--h --m";
+  if (p_total > 50) {
+      let remainingWh = 20000 * (currentSOC / 100);
+  if (p_total > 50) { // Only calculate if there's significant load
+      let remainingWh = BATTERY_CAPACITY_WH * (currentSOC / 100);
+      let effectivePower = p_total * drainMultiplier; 
+      let hoursLeft = Math.floor(remainingWh / effectivePower);
+      let minsLeft = Math.floor(((remainingWh / effectivePower) - hoursLeft) * 60);
+      autonomyStr = hoursLeft + "h " + String(minsLeft).padStart(2, '0') + "m";
+  }
+
+  let history_pow = [];
+  let history_soc = [];
+  let currentSimHourInt = Math.floor(simHour);
+
+  for(let h=0; h<24; h++) {
+      if (h < 8 || h > 19) {
+          history_pow.push(50);
+          history_soc.push(100);
+      } else {
+          let hc = 0.05;
+          if (h >= 8 && h < 12) hc = 1.0;
+          else if (h == 12) hc = 0.7;
+          else if (h == 13) hc = 0.35;
+          else if (h == 14) hc = 0.85;
+          else if (h == 15) hc = 0.9;
+          else if (h == 16) hc = 0.75;
+          else if (h == 17) hc = 0.55;
+          else if (h == 18) hc = 0.3;
+          else if (h === 12) hc = 0.7;
+          else if (h === 13) hc = 0.35;
+          else if (h === 14) hc = 0.85;
+          else if (h === 15) hc = 0.9;
+          else if (h === 16) hc = 0.75;
+          else if (h === 17) hc = 0.55;
+          else if (h === 18) hc = 0.3;
+          
+          if (h < currentSimHourInt) {
+              // Passé : courbe normale
+              history_pow.push(Math.round(4900 * hc));
+              history_soc.push(Math.max(10, 100 - (h - 7) * 8)); 
+              history_soc.push(Math.max(MIN_SOC_ABSOLUTE, 100 - (h - 7) * 8)); 
+          } else if (h === currentSimHourInt) {
+              // Présent : la vraie puissance avec délestage potentiel
+              history_pow.push(Math.round(p_total));
+              history_soc.push(intSOC); 
+              // If there's a battery fault, reflect it in the current SOH
+              if (isPanne8Active) {
+                document.getElementById('soh-val').textContent = '42% (DÉFAILLANT)';
+                document.getElementById('soh-val').style.color = 'var(--red)';
+              } else {
+                document.getElementById('soh-val').textContent = '98%';
+                document.getElementById('soh-val').style.color = 'var(--green)';
+              }
+          } else {
+              // Futur : Prédiction de la batterie
+              let dropRate = 8; 
+              if (isPanne4Active) dropRate = 24; 
+              if (isPanne8Active) dropRate = 48; 
+              let hoursAhead = h - currentSimHourInt;
+              let futureSOC = intSOC - (hoursAhead * dropRate);
+              if (futureSOC < 10) futureSOC = 10;
+              if (futureSOC < MIN_SOC_ABSOLUTE) futureSOC = MIN_SOC_ABSOLUTE;
+              history_soc.push(Math.floor(futureSOC));
+
+              // CORRECTION ICI : Prédiction de la puissance en fonction de la batterie future
+              let future_p = 0;
+              if (futureSOC > 10) future_p += 1000 * hc; // Eclairage
+              if (futureSOC > RELAY_R1_SOC_THRESHOLD) future_p += RELAY_R1_POWER_W * hc; // Eclairage
+              if (futureSOC > 40) future_p += 2700 * hc; // Prises
+              if (futureSOC > 70) future_p += 1200 * hc; // Clim
+              if (future_p < 50) future_p = 50;
+              
+              history_pow.push(Math.round(future_p));
+          }
+      }
+  }
+  
+  let simulatedPR = isPanne4Active ? Math.floor(32 + Math.random()*5) : Math.floor(82 + Math.random()*3);
+
+  let pv_active = (simHour >= 7 && simHour <= 18) && !isPanne4Active; 
+  // Determine downtime message
+  let downtimeMsg = '0h';
+  if (intSOC <= RELAY_R1_SOC_THRESHOLD) {
+      downtimeMsg = `Coupure Totale (${RELAY_R1_SOC_THRESHOLD}%)`;
+  } else if (intSOC <= RELAY_R2_SOC_THRESHOLD) {
+      downtimeMsg = `PC + Clim coupés (${RELAY_R2_SOC_THRESHOLD}%)`;
+  } else if (intSOC <= RELAY_R3_SOC_THRESHOLD) {
+      downtimeMsg = `Clim coupée (${RELAY_R3_SOC_THRESHOLD}%)`;
+  }
+
+  let pv_active = (simHour >= 7 && simHour <= 18) && !isPanne4Active; // PV active during day, unless panne4
+  let bat_active = intSOC > 10; 
+  let load_active = r1_on || r2_on || r3_on; 
+
+  updateDashboard({
+    soc: intSOC, 
+    voltage: (21 + ((intSOC-10)/90) * 4).toFixed(2), 
+    current: (p_total / 24).toFixed(1), 
+    power: Math.round(p_total), 
+    vac: 228 + Math.floor(Math.random() * 4),
+    autonomy: autonomyStr, 
+    pr: simulatedPR, 
+    relays_status: { r1: r1_on, r2: r2_on, r3: r3_on },
+    flows: { pv: pv_active, bat: bat_active, load: load_active },
+    daily_kwh: dailyKwh.toFixed(1),
+    downtime: (intSOC <= 10) ? 'Coupure Totale (10%)' : ((intSOC <= 40) ? 'PC + Clim coupés (40%)' : ((intSOC <= 70) ? 'Clim coupée (70%)' : '0h')),
+    daily_kwh: dailyKwh.toFixed(1), // Total daily energy consumed
+    downtime: downtimeMsg, // Dynamic downtime message
+    history_soc: history_soc,
+    history_pow: history_pow
+  });
+}
+
+['r1','r2','r3'].forEach(id => {
+  document.getElementById(id+'-sw').disabled = true;
+});
+
+initSystemLogs();
+demoData();
+demoData(); // Initial call to populate dashboard
+
+// Vitesse de la boucle : 1000ms = 1 seconde
+setInterval(demoData, 1000); 
+// Simulation loop speed
+setInterval(demoData, SIMULATION_INTERVAL_MS); 
+</script>
+</body>
+</html>

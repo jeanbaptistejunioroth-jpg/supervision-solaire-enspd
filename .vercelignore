@@ -1,0 +1,5 @@
+# Le code embarqué (firmware) n'est jamais publié sur le site
+final code/
+**/secrets.h
+*.mp4
+.env*

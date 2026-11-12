@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Supervision Solaire — ENSPD</title>
+<meta name="description" content="Système de supervision et de délestage intelligent d'une installation photovoltaïque : Arduino, ESP32, tableau de bord web et alertes Telegram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#f59e0b;--accent2:#10b981;--chip:#fff7e6}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#111a2e;--text:#e2e8f0;--muted:#94a3b8;--line:#1e293b;--chip:#2a2210}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header{padding:64px 0 40px}
+.badge{display:inline-block;background:var(--chip);color:var(--accent);font-weight:700;font-size:.8rem;padding:4px 12px;border-radius:999px;margin-bottom:16px}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;font-weight:800;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+.lead{color:var(--muted);font-size:1.1rem;max-width:680px;margin-top:16px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-block;padding:12px 20px;border-radius:12px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--card)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#111}
+section{padding:32px 0}
+h2{font-size:1.5rem;font-weight:800;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{font-size:1.05rem;margin-bottom:6px}
+.card p{color:var(--muted);font-size:.95rem}
+.ico{font-size:1.6rem;margin-bottom:8px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-weight:700}
+.flow .n{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.flow .a{color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem;font-weight:600}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;font-size:.95rem}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+.note{color:var(--muted);font-size:.9rem;margin-top:12px}
+footer{padding:40px 0;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);margin-top:40px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="badge">☀️ Projet IoT · Énergie solaire</div>
+  <h1>Supervision &amp; délestage intelligent d'une <span>installation photovoltaïque</span></h1>
+  <p class="lead">Un système embarqué qui mesure en temps réel l'état d'un parc batterie et de l'onduleur, coupe automatiquement les charges non prioritaires quand l'énergie baisse, et permet le pilotage à distance depuis un tableau de bord web — avec alertes Telegram.</p>
+  <div class="cta">
+    <a class="btn primary" href="/interface/fonctionnement%20normal.html">▶ Voir la démo du tableau de bord</a>
+    <a class="btn" href="/interface/panne.html">Scénario « panne / batterie faible »</a>
+  </div>
+  <p class="note">Les démos utilisent des données simulées. Les commandes réelles sont désactivées sur cette version vitrine.</p>
+</header>
+
+<section>
+  <h2>Fonctionnalités</h2>
+  <div class="grid">
+    <div class="card"><div class="ico">📈</div><h3>Mesures temps réel</h3><p>Tension batterie (DC), tension onduleur (AC efficace), courant, puissance et état de charge (SOC), lissés numériquement.</p></div>
+    <div class="card"><div class="ico">⚡</div><h3>Délestage automatique</h3><p>3 niveaux de priorité : climatisation coupée sous 70 %, prises sous 40 %, éclairage sous 10 %, avec hystérésis au retour.</p></div>
+    <div class="card"><div class="ico">🖥️</div><h3>Tableau de bord web</h3><p>Synoptique du flux d'énergie, historiques 24 h, autonomie estimée, ratio de performance, journal des événements.</p></div>
+    <div class="card"><div class="ico">🎛️</div><h3>Pilotage à distance</h3><p>Forçage manuel de chaque relais, retour en mode automatique et mode maintenance depuis le navigateur.</p></div>
+    <div class="card"><div class="ico">📲</div><h3>Alertes Telegram</h3><p>Notification instantanée à chaque franchissement de seuil critique de la batterie.</p></div>
+    <div class="card"><div class="ico">📟</div><h3>Affichage local</h3><p>Écran LCD 20×4 sur site : SOC, courant, tensions et état des trois circuits.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Architecture</h2>
+  <div class="flow">
+    <span class="n">Capteurs (tension DC/AC, ACS712)</span><span class="a">→</span>
+    <span class="n">Arduino + relais + LCD</span><span class="a">⇄ UART</span>
+    <span class="n">ESP32 (Wi-Fi, serveur web)</span><span class="a">→</span>
+    <span class="n">Navigateur · Telegram</span>
+  </div>
+</section>
+
+<section>
+  <h2>Technologies</h2>
+  <div class="tags">
+    <span class="tag">C++ / Arduino</span><span class="tag">ESP32</span><span class="tag">WebServer embarqué</span><span class="tag">API JSON</span>
+    <span class="tag">HTML / CSS / JavaScript</span><span class="tag">Chart.js</span><span class="tag">Telegram Bot API</span>
+    <span class="tag">LCD I²C</span><span class="tag">Capteur ACS712</span><span class="tag">Liaison série UART</span>
+  </div>
+</section>
+
+<section>
+  <h2>Seuils de délestage</h2>
+  <table>
+    <tr><th>Circuit</th><th>Priorité</th><th>Coupure</th><th>Réarmement</th></tr>
+    <tr><td>Climatisation</td><td>Basse</td><td>SOC ≤ 70 %</td><td>SOC &gt; 70 %</td></tr>
+    <tr><td>Prises</td><td>Moyenne</td><td>SOC ≤ 40 %</td><td>SOC &gt; 40 %</td></tr>
+    <tr><td>Éclairage</td><td>Haute</td><td>SOC ≤ 10 %</td><td>SOC &gt; 10 %</td></tr>
+  </table>
+</section>
+
+<footer>
+  Installation PV — Bloc administratif ENSPD · <a href="/mentions-legales">Mentions légales</a>
+</footer>
+</div>
+</body>
+</html>
